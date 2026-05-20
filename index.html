@@ -302,6 +302,11 @@ main {
                     <!-- JSで動的に生成 -->
                 </div>
             </div>
+
+            <!-- リセットボタン -->
+            <div style="margin-top: 40px; text-align: center;">
+                <button onclick="app.resetAll()" class="action-btn btn-danger" style="font-size: 1rem; padding: 16px; opacity: 0.8;">全データをリセット</button>
+            </div>
         </main>
     </div>
 
@@ -604,6 +609,15 @@ class App {
             this.saveData();
             this.render();
             this.closeModal();
+        }
+    }
+
+    resetAll() {
+        if (confirm("本当にすべての記録をリセットして、最初からやり直しますか？\n（テスト後のリセット用です。この操作は取り消せません）")) {
+            localStorage.removeItem(STORAGE_KEY);
+            this.records = this.loadData();
+            this.render();
+            alert("すべての記録をリセットしました。");
         }
     }
 }
