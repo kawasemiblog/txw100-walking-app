@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>100kmウォーク 記録アプリ</title>
+    <style>
+:root {
+    --bg-color: #121212;
+    --card-bg: #1e1e1e;
+    --text-main: #ffffff;
+    --text-muted: #aaaaaa;
+    --primary: #4caf50;
+    --primary-active: #388e3c;
+    --secondary: #2196f3;
+    --secondary-active: #1976d2;
+    --danger: #f44336;
+    --warning: #ff9800;
+    --border: #333333;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    line-height: 1.6;
+    padding-bottom: 40px;
+}
+
+header {
+    background-color: var(--card-bg);
+    padding: 16px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+header h1 {
+    font-size: 1.2rem;
+    font-weight: bold;
+}
+
+main {
+    padding: 16px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.card h2 {
+    font-size: 1.1rem;
+    margin-bottom: 12px;
+    color: var(--warning);
+}
+
+.estimate-box {
+    text-align: center;
+    margin-top: 16px;
+}
+
+.time-display {
+    font-size: 3.5rem;
+    font-weight: bold;
+    letter-spacing: 2px;
+    margin: 8px 0;
+    color: var(--primary);
+}
+
+.estimate-note {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* アクションボタン */
+.actions-container {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.action-btn {
+    width: 100%;
+    padding: 24px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 16px;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.1s, background-color 0.2s;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.action-btn:active {
+    transform: scale(0.98);
+}
+
+.action-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-primary { background-color: var(--primary); }
+.btn-primary:active:not(:disabled) { background-color: var(--primary-active); }
+
+.btn-secondary { background-color: var(--secondary); }
+.btn-secondary:active:not(:disabled) { background-color: var(--secondary-active); }
+
+
+/* 記録リスト */
+.records-header {
+    margin-bottom: 16px;
+}
+
+.edit-hint {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.record-item {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 0;
+}
+
+.record-item:last-child {
+    border-bottom: none;
+}
+
+.record-title {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.record-dist {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: normal;
+}
+
+.record-times {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.time-block {
+    flex: 1;
+    background-color: rgba(255, 255, 255, 0.05);
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.time-block:active {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.time-label {
+    display: block;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.time-value {
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+
+.time-value.empty {
+    color: var(--text-muted);
+    font-size: 1.2rem;
+}
+
+/* モーダル */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    padding: 20px;
+}
+
+.modal.hidden {
+    display: none;
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    width: 100%;
+    max-width: 400px;
+    padding: 24px;
+    border-radius: 12px;
+    text-align: center;
+}
+
+.modal-content h3 {
+    margin-bottom: 8px;
+}
+
+#edit-target-name {
+    color: var(--warning);
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.time-input {
+    width: 100%;
+    padding: 16px;
+    font-size: 2rem;
+    text-align: center;
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin-bottom: 24px;
+    color-scheme: dark;
+}
+
+.modal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.modal-actions button {
+    flex: 1;
+    min-width: 100px;
+    padding: 16px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+}
+
+.btn-cancel { background-color: #555; }
+.btn-danger { background-color: var(--danger); flex-basis: 100%; }
+.btn-save { background-color: var(--primary); }
+
+</style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>100kmウォーク記録</h1>
+        </header>
+
+        <main>
+            <!-- 予想時刻表示エリア -->
+            <div id="dashboard" class="card">
+                <h2>次の目標: <span id="next-cp-name">--</span> (<span id="next-cp-dist">0</span>km)</h2>
+                <div class="estimate-box">
+                    <p>到着予想時刻</p>
+                    <div id="estimated-time" class="time-display">--:--</div>
+                    <p class="estimate-note">※直前の区間ペースを元に計算しています</p>
+                </div>
+            </div>
+
+            <!-- アクションボタンエリア -->
+            <div id="actions" class="actions-container">
+                <button id="btn-arrival" class="action-btn btn-primary" onclick="app.recordTime('arrival')">到着を記録</button>
+                <button id="btn-departure" class="action-btn btn-secondary" onclick="app.recordTime('departure')">出発を記録</button>
+            </div>
+
+            <!-- 記録リスト -->
+            <div class="records-container card">
+                <div class="records-header">
+                    <h2>記録一覧</h2>
+                    <p class="edit-hint">※時刻をタップすると手動で修正・入力（押し忘れ対応）できます。</p>
+                </div>
+                <div id="records-list">
+                    <!-- JSで動的に生成 -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 編集モーダル -->
+    <div id="edit-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>時刻の手動入力・修正</h3>
+            <p id="edit-target-name"></p>
+            <input type="time" id="edit-time-input" class="time-input">
+            <div class="modal-actions">
+                <button onclick="app.closeModal()" class="btn-cancel">キャンセル</button>
+                <button id="btn-clear-time" onclick="app.clearTime()" class="btn-danger">記録を消す</button>
+                <button onclick="app.saveEditedTime()" class="btn-save">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+const CHECKPOINTS = [
+    { id: 0, name: "スタート", dist: 0, hasArrival: false },
+    { id: 1, name: "第1CP", dist: 21, hasArrival: true },
+    { id: 2, name: "第2CP", dist: 33, hasArrival: true },
+    { id: 3, name: "第3CP", dist: 54, hasArrival: true },
+    { id: 4, name: "第4CP", dist: 67, hasArrival: true },
+    { id: 5, name: "第5CP", dist: 86, hasArrival: true },
+    { id: 6, name: "ゴール", dist: 100, hasArrival: true, hasDeparture: false }
+];
+
+const STORAGE_KEY = 'txw100_data';
+
+class App {
+    constructor() {
+        this.records = this.loadData();
+        this.editTarget = null; // { id: number, type: 'arrival' | 'departure' }
+
+        // DOM要素
+        this.nextCpNameEl = document.getElementById('next-cp-name');
+        this.nextCpDistEl = document.getElementById('next-cp-dist');
+        this.estimatedTimeEl = document.getElementById('estimated-time');
+        this.btnArrival = document.getElementById('btn-arrival');
+        this.btnDeparture = document.getElementById('btn-departure');
+        this.recordsListEl = document.getElementById('records-list');
+
+        // モーダル
+        this.editModal = document.getElementById('edit-modal');
+        this.editTargetName = document.getElementById('edit-target-name');
+        this.editTimeInput = document.getElementById('edit-time-input');
+
+        this.init();
+    }
+
+    loadData() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                return JSON.parse(saved);
+            } catch (e) {
+                console.error("データの読み込みに失敗しました", e);
+            }
+        }
+        // 初期データ
+        return CHECKPOINTS.map(cp => ({
+            id: cp.id,
+            arrival: null,
+            departure: null
+        }));
+    }
+
+    saveData() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(this.records));
+    }
+
+    init() {
+        this.render();
+        // 1分ごとに表示更新（予想時刻などが変わるわけではないが念のため）
+        setInterval(() => this.render(), 60000);
+    }
+
+    // 現在の状態から次に目指すべきCPとボタンの状態を判定
+    getCurrentState() {
+        let nextCpId = null;
+        let canArrive = false;
+        let canDepart = false;
+
+        for (let i = 0; i < this.records.length; i++) {
+            const r = this.records[i];
+            const cp = CHECKPOINTS[i];
+
+            // スタート地点
+            if (i === 0) {
+                if (!r.departure) {
+                    return { nextCpId: null, canArrive: false, canDepart: true, currentId: 0 };
+                }
+            } else {
+                if (cp.hasArrival && !r.arrival) {
+                    return { nextCpId: i, canArrive: true, canDepart: false, currentId: i };
+                }
+                if (cp.id !== 6 && !r.departure) { // ゴール以外
+                    return { nextCpId: i, canArrive: false, canDepart: true, currentId: i };
+                }
+            }
+        }
+        
+        // 全て完了
+        return { nextCpId: null, canArrive: false, canDepart: false, currentId: null };
+    }
+
+    recordTime(type) {
+        const state = this.getCurrentState();
+        if (state.currentId === null) return;
+
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+
+        if (confirm(`${CHECKPOINTS[state.currentId].name}の${type === 'arrival' ? '到着' : '出発'}を現在時刻（${timeStr}）で記録しますか？`)) {
+            this.records[state.currentId][type] = now.getTime();
+            this.saveData();
+            this.render();
+        }
+    }
+
+    // 直近ペースから予想時刻を計算
+    calculateEstimatedTime(targetCpId) {
+        if (!targetCpId || targetCpId === 0) return null;
+
+        // 直近の歩行区間（到着済みの直近CPとその1つ前の出発）を探す
+        let lastArrivedCpIndex = -1;
+        for (let i = targetCpId - 1; i > 0; i--) {
+            if (this.records[i].arrival && this.records[i - 1].departure) {
+                lastArrivedCpIndex = i;
+                break;
+            }
+        }
+
+        if (lastArrivedCpIndex === -1) {
+            // まだCP1にすら到着していない場合は計算不能
+            return null;
+        }
+
+        const prevCpId = lastArrivedCpIndex - 1;
+        const timeDiffMs = this.records[lastArrivedCpIndex].arrival - this.records[prevCpId].departure;
+        const distDiff = CHECKPOINTS[lastArrivedCpIndex].dist - CHECKPOINTS[prevCpId].dist;
+
+        if (distDiff <= 0 || timeDiffMs <= 0) return null;
+
+        const paceMsPerKm = timeDiffMs / distDiff; // 1kmあたりのミリ秒
+
+        // 現在向かっている区間の情報
+        const currentTargetDist = CHECKPOINTS[targetCpId].dist;
+        const lastDepartedDist = CHECKPOINTS[targetCpId - 1].dist;
+        const currentSegmentDist = currentTargetDist - lastDepartedDist;
+        
+        const lastDepartureTime = this.records[targetCpId - 1].departure;
+
+        if (!lastDepartureTime) return null;
+
+        const estimatedArrivalMs = lastDepartureTime + (paceMsPerKm * currentSegmentDist);
+        return new Date(estimatedArrivalMs);
+    }
+
+    render() {
+        const state = this.getCurrentState();
+
+        // ダッシュボードの更新
+        if (state.nextCpId !== null) {
+            const nextCp = CHECKPOINTS[state.nextCpId];
+            this.nextCpNameEl.textContent = nextCp.name;
+            this.nextCpDistEl.textContent = nextCp.dist;
+            
+            const est = this.calculateEstimatedTime(state.nextCpId);
+            if (est) {
+                this.estimatedTimeEl.textContent = est.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+            } else {
+                this.estimatedTimeEl.textContent = "--:--";
+            }
+        } else {
+            this.nextCpNameEl.textContent = "ゴール達成！";
+            this.nextCpDistEl.textContent = "100";
+            this.estimatedTimeEl.textContent = "--:--";
+        }
+
+        // ボタンの更新
+        this.btnArrival.disabled = !state.canArrive;
+        this.btnDeparture.disabled = !state.canDepart;
+
+        // リストの更新
+        this.recordsListEl.innerHTML = '';
+        CHECKPOINTS.forEach((cp, i) => {
+            const r = this.records[i];
+            
+            let arrText = "--:--";
+            let depText = "--:--";
+
+            if (r.arrival) {
+                arrText = new Date(r.arrival).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+            }
+            if (r.departure) {
+                depText = new Date(r.departure).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+            }
+
+            const item = document.createElement('div');
+            item.className = 'record-item';
+
+            let arrHtml = '';
+            if (cp.hasArrival) {
+                arrHtml = `
+                    <div class="time-block" onclick="app.openModal(${i}, 'arrival')">
+                        <span class="time-label">到着</span>
+                        <span class="time-value ${r.arrival ? '' : 'empty'}">${arrText}</span>
+                    </div>
+                `;
+            }
+
+            let depHtml = '';
+            if (cp.id !== 6) { // ゴール以外
+                depHtml = `
+                    <div class="time-block" onclick="app.openModal(${i}, 'departure')">
+                        <span class="time-label">出発</span>
+                        <span class="time-value ${r.departure ? '' : 'empty'}">${depText}</span>
+                    </div>
+                `;
+            }
+
+            item.innerHTML = `
+                <div class="record-title">
+                    <span>${cp.name}</span>
+                    <span class="record-dist">${cp.dist}km</span>
+                </div>
+                <div class="record-times">
+                    ${arrHtml}
+                    ${depHtml}
+                </div>
+            `;
+            this.recordsListEl.appendChild(item);
+        });
+    }
+
+    // モーダル関連
+    openModal(cpId, type) {
+        this.editTarget = { id: cpId, type: type };
+        const cp = CHECKPOINTS[cpId];
+        const r = this.records[cpId];
+        
+        const typeStr = type === 'arrival' ? '到着' : '出発';
+        this.editTargetName.textContent = `${cp.name} - ${typeStr}`;
+
+        if (r[type]) {
+            const d = new Date(r[type]);
+            const hh = String(d.getHours()).padStart(2, '0');
+            const mm = String(d.getMinutes()).padStart(2, '0');
+            this.editTimeInput.value = `${hh}:${mm}`;
+        } else {
+            this.editTimeInput.value = '';
+        }
+
+        this.editModal.classList.remove('hidden');
+    }
+
+    closeModal() {
+        this.editModal.classList.add('hidden');
+        this.editTarget = null;
+    }
+
+    saveEditedTime() {
+        if (!this.editTarget) return;
+
+        const timeStr = this.editTimeInput.value;
+        if (!timeStr) {
+            alert("時刻を入力してください");
+            return;
+        }
+
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        
+        // 既存の記録があればその日付を使い、なければ現在の日付を使う
+        // ※100kmウォークは日をまたぐため、前後の文脈から日付を推定する処理も可能だが、
+        // 簡易版として現在の日付または既存のタイムスタンプの日付とする
+        let baseDate = new Date();
+        const existingTs = this.records[this.editTarget.id][this.editTarget.type];
+        if (existingTs) {
+            baseDate = new Date(existingTs);
+        } else {
+            // もし日またぎを考慮するなら、ここで少し工夫が必要ですが、
+            // 今回は入力時の現在日付を採用します。
+            baseDate = new Date();
+        }
+
+        baseDate.setHours(hours, minutes, 0, 0);
+
+        this.records[this.editTarget.id][this.editTarget.type] = baseDate.getTime();
+        this.saveData();
+        this.render();
+        this.closeModal();
+    }
+
+    clearTime() {
+        if (!this.editTarget) return;
+        if (confirm("この記録を削除しますか？")) {
+            this.records[this.editTarget.id][this.editTarget.type] = null;
+            this.saveData();
+            this.render();
+            this.closeModal();
+        }
+    }
+}
+
+// 初期化
+window.app = new App();
+
+</script>
+</body>
+</html>
